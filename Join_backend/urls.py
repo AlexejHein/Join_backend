@@ -17,6 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from generator.views import GenerateTokenView, login_view
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('generate-token/', GenerateTokenView.as_view(), name='generate-token'),
+    path('login/', login_view, name='login'),
+
 ]
