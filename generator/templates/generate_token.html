@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Generator</title>
 </head>
 <body>
+    <button id="generateTokenButton">Generate Token</button>
+    <div id="tokenDisplay"></div>
 
-{% if access_token %}
-    <p>Your token: {{ access_token }}</p>
-    <button onclick="location.reload();">Generate New Token</button>
-{% else %}
-    <p>You need to log in to generate a token.</p>
-{% endif %}
-
-
+    <script>
+        document.getElementById('generateTokenButton').addEventListener('click', function() {
+            fetch('/generate-token/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('tokenDisplay').innerText = 'Generated Token: ' + data.token;
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
 </body>
 </html>
