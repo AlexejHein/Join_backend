@@ -8,7 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('generate-token/', views.generate_token),
     path('receive-data/', views.receive_data),
-    path('token-generator/', TemplateView.as_view(template_name='generate_token.html'), name='token-generator'),
+    path('', TemplateView.as_view(template_name='generate_token.html'), name='token-generator'),
 
 ]
 
