@@ -3,12 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: aliceblue;
+        }
+        .content{
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #tokenDisplay{
+            margin-bottom: 20px;
+        }
+        button{
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
     <title>Token Generator</title>
 </head>
 <body>
-    <button id="generateTokenButton">Generate Token</button>
+<div class="content">
     <div id="tokenDisplay"></div>
-
+    <button id="generateTokenButton">Generate Token</button>
+</div>
     <script>
         document.getElementById('generateTokenButton').addEventListener('click', function() {
             fetch('/generate-token/')

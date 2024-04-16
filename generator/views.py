@@ -8,33 +8,36 @@ import json
 @csrf_exempt
 @require_http_methods(["POST", "GET", "DELETE"])
 def item(request):
-    # Token aus dem Header extrahieren
     token_header = request.headers.get('Authorization')
-    if not token_header or not token_header.startswith('Bearer '):
-        return JsonResponse({'status': 'error', 'message': 'No token provided'}, status=401)
-
     token_str = token_header.split(' ')[1]
-    try:
-        token = Token.objects.get(token=token_str)
-    except Token.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Invalid token'}, status=401)
+    token = Token.objects.get(token=token_str)
 
     if request.method == 'POST':
-        # Daten setzen
         data = json.loads(request.body)
         key = data.get('key')
         value = data.get('value')
-        ReceivedData.objects.update_or_create(key=key, token=token, defaults={'value': value})
-        return JsonResponse({'status': 'success', 'message': 'Data saved'})
+
+        # Erhalte die höchste Version für diesen Schlüssel und Token
+        latest_version = ReceivedData.objects.filter(key=key, token=token).order_by('-version').first()
+        new_version = latest_version.version + 1 if latest_version else 1
+
+        # Erstelle immer einen neuen Datensatz
+        ReceivedData.objects.create(key=key, token=token, value=value, version=new_version)
+        return JsonResponse({'status': 'success', 'message': 'Data saved with new version'})
 
     elif request.method == 'GET':
-        # Daten abrufen
         key = request.GET.get('key')
-        try:
-            data_item = ReceivedData.objects.get(key=key, token=token)
-            return JsonResponse({'status': 'success', 'data': data_item.value})
-        except ReceivedData.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Data not found'}, status=404)
+        if key:
+            try:
+                data_item = ReceivedData.objects.get(key=key, token=token)
+                return JsonResponse({'status': 'success', 'data': data_item.value})
+            except ReceivedData.DoesNotExist:
+                return JsonResponse({'status': 'error', 'message': 'Data not found'}, status=404)
+        else:
+            # Kein spezifischer Schlüssel, gib alle Daten für das Token zurück
+            data_items = ReceivedData.objects.filter(token=token)
+            data_list = [{'key': item.key, 'value': item.value} for item in data_items]
+            return JsonResponse({'status': 'success', 'data': data_list})
 
     elif request.method == 'DELETE':
         # Daten löschen

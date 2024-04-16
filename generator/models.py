@@ -12,6 +12,7 @@ class ReceivedData(models.Model):
     key = models.CharField(max_length=255)
     value = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    version = models.IntegerField(default=1)  # Neue Versionierung
 
     def __str__(self):
-        return f"{self.key}: {self.value} (Token: {self.token})"
+        return f"{self.key} v{self.version}: {self.value} (Token: {self.token})"
