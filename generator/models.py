@@ -9,8 +9,9 @@ class Token(models.Model):
 
 class ReceivedData(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
-    data = models.TextField()
-    received_at = models.DateTimeField(auto_now_add=True)
+    key = models.CharField(max_length=255)
+    value = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Data received at {self.received_at} with token {self.token}"
+        return f"{self.key}: {self.value} (Token: {self.token})"
