@@ -8,36 +8,42 @@ import json
 @csrf_exempt
 @require_http_methods(["POST", "GET", "DELETE"])
 def item(request):
-    token_header = request.headers.get('Authorization')
-    token_str = token_header.split(' ')[1]
-    token = Token.objects.get(token=token_str)
+    token_header = request.headers.get('Authorization', '')
+    if not token_header.startswith('Bearer '):
+        return JsonResponse({'status': 'error', 'message': 'Missing or malformed token'}, status=401)
+
+    token_str = token_header[7:]  # Entfernt 'Bearer '
+    try:
+        token = Token.objects.get(token=token_str)
+    except Token.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Invalid token'}, status=403)
 
     if request.method == 'POST':
-        data = json.loads(request.body)
-        key = data.get('key')
-        value = data.get('value')
-
-        # Erhalte die höchste Version für diesen Schlüssel und Token
-        latest_version = ReceivedData.objects.filter(key=key, token=token).order_by('-version').first()
-        new_version = latest_version.version + 1 if latest_version else 1
-
-        # Erstelle immer einen neuen Datensatz
-        ReceivedData.objects.create(key=key, token=token, value=value, version=new_version)
-        return JsonResponse({'status': 'success', 'message': 'Data saved with new version'})
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            key = data['key']
+            value = data['value']
+            # Fügen Sie hier eine Logikprüfung hinzu, um sicherzustellen, dass alle Felder korrekt sind
+            data_item, created = ReceivedData.objects.update_or_create(
+                key=key,
+                token=token,
+                defaults={'value': value}
+            )
+            return JsonResponse(
+                {'status': 'success', 'data': {'key': key, 'value': value}, 'message': 'Data created or updated'},
+                status=201 if created else 200)
+        except (KeyError, json.JSONDecodeError) as e:
+            return JsonResponse({'status': 'error', 'message': 'Invalid data or malformed JSON: ' + str(e)}, status=400)
 
     elif request.method == 'GET':
         key = request.GET.get('key')
-        if key:
-            try:
-                data_item = ReceivedData.objects.get(key=key, token=token)
-                return JsonResponse({'status': 'success', 'data': data_item.value})
-            except ReceivedData.DoesNotExist:
-                return JsonResponse({'status': 'error', 'message': 'Data not found'}, status=404)
-        else:
-            # Kein spezifischer Schlüssel, gib alle Daten für das Token zurück
-            data_items = ReceivedData.objects.filter(token=token)
-            data_list = [{'key': item.key, 'value': item.value} for item in data_items]
-            return JsonResponse({'status': 'success', 'data': data_list})
+        if not key:
+            return JsonResponse({'status': 'error', 'message': 'Key is required'}, status=400)
+        try:
+            data_item = ReceivedData.objects.get(key=key, token=token)
+            return JsonResponse({'status': 'success', 'data': {'key': key, 'value': data_item.value}})
+        except ReceivedData.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Data not found'}, status=404)
 
     elif request.method == 'DELETE':
         # Daten löschen
