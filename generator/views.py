@@ -12,7 +12,7 @@ def item(request):
     if not token_header.startswith('Bearer '):
         return JsonResponse({'status': 'error', 'message': 'Missing or malformed token'}, status=401)
 
-    token_str = token_header[7:]  # Entfernt 'Bearer '
+    token_str = token_header[7:]
     try:
         token = Token.objects.get(token=token_str)
     except Token.DoesNotExist:
@@ -23,7 +23,6 @@ def item(request):
             data = json.loads(request.body.decode('utf-8'))
             key = data['key']
             value = data['value']
-            # Fügen Sie hier eine Logikprüfung hinzu, um sicherzustellen, dass alle Felder korrekt sind
             data_item, created = ReceivedData.objects.update_or_create(
                 key=key,
                 token=token,
@@ -46,7 +45,6 @@ def item(request):
             return JsonResponse({'status': 'error', 'message': 'Data not found'}, status=404)
 
     elif request.method == 'DELETE':
-        # Daten löschen
         key = request.GET.get('key')
         ReceivedData.objects.filter(key=key, token=token).delete()
         return JsonResponse({'status': 'success', 'message': 'Data deleted'})
@@ -61,7 +59,7 @@ def generate_token(request):
 
 def receive_data(request):
     token = request.GET.get('token')
-    data = request.GET.get('data')  # Beispiel: ein einfacher Datenstring
+    data = request.GET.get('data')
 
     try:
         token_obj = Token.objects.get(token=token)
